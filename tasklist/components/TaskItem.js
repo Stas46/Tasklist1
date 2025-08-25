@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, Platform, Alert } from 'react-native';
 import SafeSwipeable from '../platform/SafeSwipeable';
 
 export default function TaskItem({
@@ -30,6 +30,23 @@ export default function TaskItem({
     setEditing(false);
   };
 
+  // Web-specific context menu for actions
+  const handleWebContextMenu = (e) => {
+    if (Platform.OS === 'web') {
+      e.preventDefault();
+      Alert.alert(
+        'Task Actions',
+        `Actions for: ${task.title}`,
+        [
+          { text: 'Mark as Done', onPress: () => onToggleDone?.(task.id) },
+          { text: 'Change Quadrant', onPress: () => onLongPress?.() },
+          { text: 'Delete', onPress: () => onDelete?.(task.id), style: 'destructive' },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+    }
+  };
+
   // На web свайпы отключены (SafeSwipeable => View),
   // Поэтому кнопки "Готово/Удалить" доступны через тап/меню, свайпов нет.
   return (
@@ -57,6 +74,7 @@ export default function TaskItem({
     >
       <Pressable
         onLongPress={() => { armGuard(); onLongPress?.(); }}
+        onContextMenu={handleWebContextMenu}
         delayLongPress={250}
         style={({ pressed }) => [
           styles.card,
@@ -87,6 +105,7 @@ export default function TaskItem({
               <Pressable
                 onPress={() => { if (!longPressGuard.current) setEditing(true); }}
                 onLongPress={() => { armGuard(); onLongPress?.(); }}
+                onContextMenu={handleWebContextMenu}
                 delayLongPress={250}
               >
                 <Text style={[styles.title, task.done && styles.done]} numberOfLines={compact ? 2 : 2}>
@@ -99,6 +118,7 @@ export default function TaskItem({
               <View style={styles.pills}>
                 {task.important ? <Text style={[styles.pill, styles.pillImportant]}>⭐ Важно</Text> : null}
                 {task.urgent ? <Text style={[styles.pill, styles.pillUrgent]}>⚡ Срочно</Text> : null}
+                {task.done && <Text style={[styles.pill, styles.pillDone]}>✓ Готово</Text>}
               </View>
             )}
           </View>
@@ -173,6 +193,7 @@ const styles = StyleSheet.create({
   pill: { fontSize: 11, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, overflow: 'hidden' },
   pillImportant: { backgroundColor: '#FFF3C4', color: '#8A6D00' },
   pillUrgent: { backgroundColor: '#FFE1E1', color: '#8A0000' },
+  pillDone: { backgroundColor: '#E6F7EA', color: '#2D5A3D' },
 
   swipeBox: { flex:1, justifyContent:'center', paddingHorizontal:16, borderRadius:14 },
   swipeText: { fontSize:14, color:'#333', fontWeight:'600' },

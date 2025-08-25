@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import {
   Modal, View, Text, StyleSheet, TextInput, Pressable,
-  Platform, KeyboardAvoidingView, ScrollView
+  Platform, KeyboardAvoidingView, ScrollView, Switch
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,14 +19,30 @@ export default function AddTaskSheet({
   const [urgent, setUrgent] = useState(false);
   const [projectId, setProjectId] = useState(initialProjectId);
 
+  // Quick quadrant selection
+  const [selectedQuadrant, setSelectedQuadrant] = useState(null);
+  const quadrants = [
+    { key: 'uv', title: 'Важно и срочно', important: true, urgent: true, color: '#FFE6E6' },
+    { key: 'v', title: 'Важно, не срочно', important: true, urgent: false, color: '#E6F7EA' },
+    { key: 'u', title: 'Срочно, не важно', important: false, urgent: true, color: '#FFF3C4' },
+    { key: 'o', title: 'Не важно, не срочно', important: false, urgent: false, color: '#F2F3F5' },
+  ];
+
   useEffect(() => {
     if (visible) {
       setTitle('');
       setImportant(false);
       setUrgent(false);
+      setSelectedQuadrant(null);
       setProjectId(initialProjectId === 'all' ? 'inbox' : initialProjectId);
     }
   }, [visible, initialProjectId]);
+
+  const selectQuadrant = (quad) => {
+    setSelectedQuadrant(quad.key);
+    setImportant(quad.important);
+    setUrgent(quad.urgent);
+  };
 
   const submit = () => {
     const t = title.trim();
@@ -55,6 +71,26 @@ export default function AddTaskSheet({
                 returnKeyType="done"
                 onSubmitEditing={submit}
               />
+
+              <Text style={styles.section}>Квадрант Эйзенхауэра</Text>
+              <View style={styles.quadrantGrid}>
+                {quadrants.map((quad) => (
+                  <Pressable
+                    key={quad.key}
+                    onPress={() => selectQuadrant(quad)}
+                    style={({ pressed }) => [
+                      styles.quadrantBtn,
+                      { backgroundColor: quad.color },
+                      selectedQuadrant === quad.key && styles.quadrantSelected,
+                      pressed && styles.pressed
+                    ]}
+                  >
+                    <Text style={[styles.quadrantText, selectedQuadrant === quad.key && styles.quadrantTextSelected]}>
+                      {quad.title}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
 
               <View style={styles.row}>
                 <Pressable onPress={() => setImportant(v => !v)} style={({ pressed }) => [styles.chip, important && styles.chipOn, pressed && styles.pressed]}>
@@ -110,6 +146,21 @@ const styles = StyleSheet.create({
   chipText: { fontSize:13, color:'#333' },
   chipTextOn: { color:'#8A6D00' },
   chipTextOnRed: { color:'#8A0000' },
+  
+  quadrantGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  quadrantBtn: { 
+    flex: 1, 
+    minWidth: '45%', 
+    paddingVertical: 12, 
+    paddingHorizontal: 8, 
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'transparent'
+  },
+  quadrantSelected: { borderColor: '#111', borderWidth: 2 },
+  quadrantText: { fontSize: 12, color: '#333', textAlign: 'center', fontWeight: '600' },
+  quadrantTextSelected: { color: '#111', fontWeight: '800' },
+  
   section: { marginTop:12, marginBottom:6, fontSize:12, color:'#666', fontWeight:'600' },
   proj: { marginRight:8, paddingVertical:6, paddingHorizontal:10, borderRadius:999, backgroundColor:'#F2F3F5' },
   projOn: { backgroundColor:'#111' },

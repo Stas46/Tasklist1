@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Platform } from 'react-native';
 import SafeDraggableList from '../platform/SafeDraggableList';
 
 import { useTasks } from '../store/useTasks';
@@ -26,6 +26,14 @@ export default function TasksScreen() {
 
   const [mode, setMode] = useState('list');
   const visibleTasks = filteredTasks();
+
+  // Task statistics
+  const stats = useMemo(() => {
+    const total = visibleTasks.length;
+    const done = visibleTasks.filter(t => t.done).length;
+    const pending = total - done;
+    return { total, done, pending };
+  }, [visibleTasks]);
 
   const quad = useMemo(() => {
     const res = { uv: [], v: [], u: [], o: [] };
@@ -166,8 +174,30 @@ export default function TasksScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.topSwitch}>
-        <Text onPress={() => setMode('list')}   style={[styles.switchBtn, mode === 'list' && styles.switchActive]}>Список</Text>
-        <Text onPress={() => setMode('matrix')} style={[styles.switchBtn, mode === 'matrix' && styles.switchActive]}>Матрица</Text>
+        <View style={styles.switchContainer}>
+          <Pressable onPress={() => setMode('list')} style={[styles.switchBtn, mode === 'list' && styles.switchActive]}>
+            <Text style={[styles.switchText, mode === 'list' && styles.switchTextActive]}>Список</Text>
+          </Pressable>
+          <Pressable onPress={() => setMode('matrix')} style={[styles.switchBtn, mode === 'matrix' && styles.switchActive]}>
+            <Text style={[styles.switchText, mode === 'matrix' && styles.switchTextActive]}>Матрица</Text>
+          </Pressable>
+        </View>
+        
+        {stats.total > 0 && (
+          <View style={styles.statsContainer}>
+            <Text style={styles.statsText}>
+              {stats.done}/{stats.total} выполнено
+            </Text>
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { width: `${stats.total > 0 ? (stats.done / stats.total) * 100 : 0}%` }
+                ]} 
+              />
+            </View>
+          </View>
+        )}
       </View>
 
       {mode === 'list' ? (
@@ -183,25 +213,37 @@ export default function TasksScreen() {
       ) : (
         <View style={styles.matrixGrid}>
           <View style={[styles.cell, styles.cellUV]}>
-            <Text style={styles.cellTitle}>⭐⚡ Важно и срочно</Text>
+            <View style={styles.cellHeader}>
+              <Text style={styles.cellTitle}>⭐⚡ Важно и срочно</Text>
+              <Text style={styles.cellCount}>({quad.uv.length})</Text>
+            </View>
             <ScrollView contentContainerStyle={styles.cellContent}>
               {quad.uv.map(renderMatrixCard)}
             </ScrollView>
           </View>
           <View style={[styles.cell, styles.cellV]}>
-            <Text style={styles.cellTitle}>⭐ Важно, не срочно</Text>
+            <View style={styles.cellHeader}>
+              <Text style={styles.cellTitle}>⭐ Важно, не срочно</Text>
+              <Text style={styles.cellCount}>({quad.v.length})</Text>
+            </View>
             <ScrollView contentContainerStyle={styles.cellContent}>
               {quad.v.map(renderMatrixCard)}
             </ScrollView>
           </View>
           <View style={[styles.cell, styles.cellU]}>
-            <Text style={styles.cellTitle}>⚡ Срочно, не важно</Text>
+            <View style={styles.cellHeader}>
+              <Text style={styles.cellTitle}>⚡ Срочно, не важно</Text>
+              <Text style={styles.cellCount}>({quad.u.length})</Text>
+            </View>
             <ScrollView contentContainerStyle={styles.cellContent}>
               {quad.u.map(renderMatrixCard)}
             </ScrollView>
           </View>
           <View style={[styles.cell, styles.cellO]}>
-            <Text style={styles.cellTitle}>🕒 Не важно, не срочно</Text>
+            <View style={styles.cellHeader}>
+              <Text style={styles.cellTitle}>🕒 Не важно, не срочно</Text>
+              <Text style={styles.cellCount}>({quad.o.length})</Text>
+            </View>
             <ScrollView contentContainerStyle={styles.cellContent}>
               {quad.o.map(renderMatrixCard)}
             </ScrollView>
@@ -228,8 +270,27 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
 
   topSwitch: { paddingHorizontal: 12, paddingTop: 6, paddingBottom: 8, flexDirection: 'row', gap: 8 },
-  switchBtn: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, backgroundColor: '#F2F3F5', color: '#333', fontSize: 13 },
-  switchActive: { backgroundColor: '#111', color: '#fff' },
+  switchContainer: { flexDirection: 'row', gap: 8 },
+  switchBtn: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, backgroundColor: '#F2F3F5' },
+  switchActive: { backgroundColor: '#111' },
+  switchText: { color: '#333', fontSize: 13, fontWeight: '600' },
+  switchTextActive: { color: '#fff' },
+  
+  statsContainer: { flex: 1, alignItems: 'flex-end', justifyContent: 'center' },
+  statsText: { fontSize: 12, color: '#666', marginBottom: 4 },
+  progressBar: { 
+    width: 80, 
+    height: 4, 
+    backgroundColor: '#E5E7EB', 
+    borderRadius: 2,
+    overflow: 'hidden'
+  },
+  progressFill: { 
+    height: '100%', 
+    backgroundColor: '#10B981',
+    borderRadius: 2,
+    minWidth: 2
+  },
 
   headerRow: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 4 },
   headerRowText: { fontSize: 12, fontWeight: '600', color: '#666' },
@@ -237,7 +298,10 @@ const styles = StyleSheet.create({
   matrixGrid: { flex: 1, flexDirection: 'row', flexWrap: 'wrap' },
   cell: { width: '50%', height: '50%', padding: 6 },
   cellContent: { paddingBottom: 24 },
-  cellTitle: { fontSize: 12, fontWeight: '600', color: '#333', marginBottom: 4 },
+  cellHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  cellTitle: { fontSize: 12, fontWeight: '600', color: '#333' },
+  cellCount: { fontSize: 11, color: '#666', backgroundColor: 'rgba(255,255,255,0.7)', 
+               paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 },
 
   cellUV: { backgroundColor: '#FFF0F0' },
   cellV:  { backgroundColor: '#F2FFF5' },

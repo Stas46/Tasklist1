@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform } from 'react-native';
 
 const FILTERS = [
   { k: 'all',      l: 'Все' },
@@ -8,6 +8,8 @@ const FILTERS = [
   { k: 'week',     l: 'Неделя' },
   { k: 'month',    l: 'Месяц' },
   { k: 'done',     l: 'Готово' },
+  { k: 'important', l: 'Важные' },
+  { k: 'urgent',   l: 'Срочные' },
 ];
 
 export default function FilterRail({ current, onChange }) {
@@ -48,6 +50,9 @@ const styles = StyleSheet.create({
     borderColor: '#ECEFF3',
     position: 'relative', // важно: не absolute
     flexShrink: 0,
+    ...(Platform.OS === 'web' ? {
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+    } : {}),
   },
   railContent: {
     gap: 8,

@@ -39,8 +39,23 @@ export const useTasks = create(
       filteredTasks: () => {
         const pid = get().selectedProjectId;
         const all = get().tasks;
-        if (pid === 'all') return all;
-        return all.filter(t => t.projectId === pid);
+        const filtered = pid === 'all' ? all : all.filter(t => t.projectId === pid);
+        
+        // Sort by: done status, then by importance/urgency, then by creation date
+        return filtered.sort((a, b) => {
+          // Done tasks go to bottom
+          if (a.done !== b.done) return a.done ? 1 : -1;
+          
+          // Priority sorting for pending tasks
+          if (!a.done && !b.done) {
+            const aPriority = (a.important ? 2 : 0) + (a.urgent ? 1 : 0);
+            const bPriority = (b.important ? 2 : 0) + (b.urgent ? 1 : 0);
+            if (aPriority !== bPriority) return bPriority - aPriority;
+          }
+          
+          // Sort by creation date (newest first)
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        });
       },
 
       getTask: (id) => get().tasks.find(t => t.id === id),
