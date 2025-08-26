@@ -1,0 +1,34 @@
+# TaskList App Enhancements - Git Patch
+# 
+# This patch includes improvements to the Eisenhower Matrix task management app:
+# - Enhanced web experience with context menus
+# - Better visual design with progress tracking
+# - Improved task sorting and filtering
+# - Quick quadrant selection in task creation
+# - Cross-platform compatibility improvements
+#
+# To apply this patch:
+# 1. Save this file as changes.patch in your git repository
+# 2. Run: git apply changes.patch
+# 3. Review changes and commit: git add . && git commit -m "Enhance Eisenhower Matrix app"
+
+# Note: This is a summary file. The actual changes have been applied to your files.
+# Copy the modified files to your local git repository and commit them.
+
+## Files modified:
+- components/TaskItem.js - Enhanced with context menu and better styling
+- screens/TasksScreen.js - Added progress tracking and improved UI
+- components/AddTaskSheet.js - Quick quadrant selection
+- store/useTasks.js - Improved task sorting logic
+- components/FilterRail.js - Added new filter options
+
+## Commit message suggestion:
+Enhance Eisenhower Matrix app with improved UX and web support
+
+- Add progress tracking with visual progress bar
+- Implement right-click context menu for web platform  
+- Enhance task sorting (completion status, priority, creation date)
+- Add quick quadrant selection in task creation
+- Improve visual design with task counters and better styling
+- Add Important/Urgent filters to filter rail
+- Enhance cross-platform compatibility
