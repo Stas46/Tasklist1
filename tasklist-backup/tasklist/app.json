@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "TaskList",
+    "slug": "tasklist",
+    "scheme": "tasklist",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "bundleIdentifier": "com.stas.tasklist"
+    },
+    "android": {
+      "package": "com.stas.tasklist",
+      "versionCode": 1
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/icon.png"
+    },
+    "extra": {}
+  }
+}
