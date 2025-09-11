@@ -11,16 +11,12 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "ios": {
-      "bundleIdentifier": "com.stas.tasklist"
-    },
-    "android": {
-      "package": "com.stas.tasklist",
-      "versionCode": 1
-    },
+    "ios": { "bundleIdentifier": "com.stas.tasklist" },
+    "android": { "package": "com.stas.tasklist", "versionCode": 1 },
     "web": {
       "bundler": "metro",
-      "favicon": "./assets/icon.png"
+      "favicon": "./assets/icon.png",
+      "output": "static"
     },
     "extra": {}
   }

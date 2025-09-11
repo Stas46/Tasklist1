@@ -28,5 +28,8 @@
     "react-native-screens": "~4.11.1",
     "react-native-web": "^0.20.0",
     "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "sharp-cli": "^5.2.0"
   }
 }
