@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as tasksService from '../src/services/tasks';
 
 /** ===== helpers ===== */
 const mapQuadrant = {
@@ -36,6 +37,9 @@ const safeWebStorage = () => {
 export const useTasks = create(
   persist(
     (set, get) => ({
+  // ===== remote sync fields =====
+  userId: null,
+  loading: false,
       /** ===== модель ===== */
       projects: [
         { id: 'all',   name: 'Все',       emoji: '📁' },
@@ -48,7 +52,7 @@ export const useTasks = create(
       filterUrgent: false,
 
       tasks: [
-        // сид пуст
+        // пустой по умолчанию; локальные данные сохраняются через persist
       ],
 
       _lastDeleted: null,
@@ -60,30 +64,59 @@ export const useTasks = create(
       setFilterImportant: (v) => set({ filterImportant: !!v }),
       setFilterUrgent: (v) => set({ filterUrgent: !!v }),
 
-      addTask: (title, opts = {}) => set((s) => {
+      addTask: async (title, opts = {}) => {
         const t = (title || '').trim();
-        if (!t) return {};
+        if (!t) return;
         const patch = opts.quadrant && mapQuadrant[opts.quadrant] ? mapQuadrant[opts.quadrant] : {};
-        const task = {
+        const localTask = {
           id: makeId(),
           title: t,
           important: !!patch.important,
           urgent: !!patch.urgent,
           done: false,
-          projectId: opts.projectId || s.selectedProjectId || 'inbox',
+          projectId: opts.projectId || get().selectedProjectId || 'inbox',
           createdAt: new Date().toISOString(),
         };
-        return { tasks: [task, ...s.tasks] };
-      }),
+        // optimistic local insert
+        set((s) => ({ tasks: [localTask, ...s.tasks] }));
+        // if user is logged in, try to create remotely and replace local id
+        try {
+          if (get().userId) {
+            const created = await tasksService.createTask({ ...localTask, user_id: get().userId });
+            set((s) => ({ tasks: s.tasks.map(x => x.id === localTask.id ? created : x) }));
+          }
+        } catch (e) {
+          console.warn('remote create failed', e.message || e);
+        }
+      },
 
       editTitle: (id, title) => set((s) => ({
         tasks: s.tasks.map(t => (t.id === id ? { ...t, title: (title || '').trim() } : t)),
       })),
-      toggleDone: (id) => set((s) => ({ tasks: s.tasks.map(t => (t.id === id ? { ...t, done: !t.done } : t)) })),
-      deleteTask: (id) => set((s) => {
-        const victim = s.tasks.find(t => t.id === id) || null;
-        return { tasks: s.tasks.filter(t => t.id !== id), _lastDeleted: victim };
-      }),
+      toggleDone: async (id) => {
+        // optimistic
+        const prev = get().tasks.find(t => t.id === id);
+        if (!prev) return;
+        set((s) => ({ tasks: s.tasks.map(t => (t.id === id ? { ...t, done: !t.done } : t)) }));
+        try {
+          if (get().userId) {
+            await tasksService.updateTask(id, { done: !prev.done });
+          }
+        } catch (e) {
+          console.warn('remote update failed', e.message || e);
+        }
+      },
+      deleteTask: async (id) => {
+        const victim = get().tasks.find(t => t.id === id) || null;
+        set((s) => ({ tasks: s.tasks.filter(t => t.id !== id), _lastDeleted: victim }));
+        try {
+          if (get().userId) {
+            await tasksService.deleteTask(id);
+          }
+        } catch (e) {
+          console.warn('remote delete failed', e.message || e);
+        }
+      },
       undoDelete: () => set((s) => (s._lastDeleted ? { tasks: [s._lastDeleted, ...s.tasks], _lastDeleted: null } : {})),
       moveBetweenProjects: (id, projectId) => set((s) => ({ tasks: s.tasks.map(t => (t.id === id ? { ...t, projectId } : t)) })),
       moveToQuadrant: (id, qKey) => set((s) => {
@@ -95,6 +128,25 @@ export const useTasks = create(
       setCreatedAt: (id, iso) => set((s) => ({ tasks: s.tasks.map(t => (t.id === id ? { ...t, createdAt: iso } : t)) })),
 
       /** ===== проекты ===== */
+      // ====== remote sync methods =====
+      setUser: (uid) => {
+        set({ userId: uid });
+        if (uid) {
+          get().loadRemote();
+        }
+      },
+
+      loadRemote: async () => {
+        set({ loading: true });
+        try {
+          const remote = await tasksService.fetchTasks();
+          // simple replace strategy: overwrite local tasks with remote (could be merged)
+          set({ tasks: remote, loading: false });
+        } catch (e) {
+          console.warn('loadRemote failed', e.message || e);
+          set({ loading: false });
+        }
+      },
       addProject: (name, emoji = '📁') => set((s) => {
         const n = (name || '').trim(); if (!n) return {};
         const newId = `prj_${makeId()}`;

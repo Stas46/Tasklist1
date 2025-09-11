@@ -18,6 +18,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import TasksScreen from './screens/TasksScreen';
 import DrawerProjects from './components/DrawerProjects';
 import { useTasks } from './store/useTasks';
+import AuthScreen from './screens/AuthScreen';
+import { onAuthStateChange } from './src/services/auth';
 
 const Drawer = createDrawerNavigator();
 
@@ -74,6 +76,28 @@ class AppErrorBoundary extends Component {
 }
 
 export default function App() {
+  const setUser = useTasks((s) => s.setUser);
+
+  React.useEffect(() => {
+    const sub = onAuthStateChange(setUser);
+    // supabase onAuthStateChange returns { data: { subscription } } in newer clients
+    return () => { try { sub?.data?.subscription?.unsubscribe?.(); } catch {} };
+  }, [setUser]);
+
+  const userId = useTasks((s) => s.userId);
+
+  if (!userId) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <AppErrorBoundary>
+            <AuthScreen />
+          </AppErrorBoundary>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
