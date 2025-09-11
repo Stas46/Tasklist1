@@ -327,8 +327,8 @@ function QuadrantCell({ title, tint, bg, data, renderItem, onAdd }) {
       </View>
 
       <Pressable onPress={onAdd} hitSlop={8} style={({ pressed }) => [styles.qPlus, pressed && { opacity: 0.85 }]}>
-        <Text style={styles.qPlusText}>＋</Text>
-      </Pressable>
+            <Text style={styles.qPlusText}>＋</Text>
+          </Pressable>
     </View>
   );
 }
@@ -345,13 +345,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
 
   grid: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', padding: 6 },
-  cell: { width: '50%', height: '50%', padding: 6, borderWidth: 2, borderRadius: 12, position: 'relative', overflow: 'hidden' },
-  cellHeader: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, marginBottom: 6 },
+  cell: { width: '50%', height: '50%', padding: 4, borderWidth: 2, borderRadius: 12, position: 'relative', overflow: 'hidden' },
+  cellHeader: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginBottom: 6 },
   cellTitle: { fontSize: 13, color: '#333', fontWeight: '700' },
   cellScroll: { flex: 1 },
 
-  qPlus: { position: 'absolute', right: 10, bottom: 10, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111' },
-  qPlusText: { color: '#fff', fontSize: 18, lineHeight: 18, fontWeight: '700' },
+  qPlus: { position: 'absolute', alignSelf: 'center', left: 0, right: 0, bottom: 10, width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111' },
+  qPlusText: { color: '#fff', fontSize: 20, lineHeight: 20, fontWeight: '700' },
 
   ctxMenu: {
     position: 'absolute',

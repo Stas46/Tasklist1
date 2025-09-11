@@ -174,7 +174,7 @@ export default function TaskItem({
                 >
                   <Text
                     style={[styles.title, compact && styles.titleCompact, task.done && styles.done]}
-                    numberOfLines={compact ? 1 : 2}               // <= одна строка в матрице
+                    numberOfLines={2}
                     ellipsizeMode="tail"
                   >
                     {task.title}
@@ -250,8 +250,8 @@ const styles = StyleSheet.create({
   // иконки в матрице — ещё компактнее
   pillsIcons: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
   iconChip: {
-    fontSize: 12,
-    paddingHorizontal: 6, paddingVertical: 2,
+  fontSize: 10,
+  paddingHorizontal: 4, paddingVertical: 1,
     borderRadius: 999, overflow: 'hidden',
   },
   iconProject: { backgroundColor: '#F2F3F5', color: '#333' },
