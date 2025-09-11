@@ -2,7 +2,7 @@ name: Deploy web to GitHub Pages
 
 on:
   push:
-    branches: [ master ]   # у тебя ветка master; если main — поменяй
+    branches: [ master ]   # если ветка main — поменяй на main
   workflow_dispatch: {}
 
 permissions:
@@ -17,19 +17,26 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tasklist   # <— работаем в подпапке
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
+          cache-dependency-path: tasklist/package-lock.json
+
       - run: npm ci
       - run: npx expo export --platform web
-      # SPA-фолбэк, чтобы все маршруты отдавали index.html
       - run: cp dist/index.html dist/404.html
-      - uses: actions/upload-pages-artifact@v3
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: tasklist/dist        # <— отдать Pages папку dist из подпроекта
 
   deploy:
     needs: build
