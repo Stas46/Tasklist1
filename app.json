@@ -1,4 +1,4 @@
-﻿{
+{
     "expo":  {
                  "name":  "TaskList",
                  "slug":  "tasklist",
@@ -25,6 +25,9 @@
                          },
                  "extra":  {
 
-                           }
+                           },
+                 "experiments":  {
+                                     "baseUrl":  "/Tasklist1"
+                                 }
              }
 }
