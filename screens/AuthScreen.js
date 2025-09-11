@@ -8,6 +8,7 @@ export default function AuthScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [info, setInfo] = useState(null);
 
   const userId = useTasks((s) => s.userId);
   const { width } = useWindowDimensions();
@@ -17,6 +18,7 @@ export default function AuthScreen() {
     setLoading(true); setError(null);
     try {
       await signIn(email.trim(), password);
+  setInfo(null);
     } catch (e) {
       setError(e.message || String(e));
     } finally { setLoading(false); }
@@ -26,6 +28,11 @@ export default function AuthScreen() {
     setLoading(true); setError(null);
     try {
       await signUp(email.trim(), password);
+  // Supabase will usually send a confirmation email for new sign-ups.
+  // Inform the user to check and confirm their email before signing in.
+  setInfo('Регистрация прошла. Проверьте почту и подтвердите email по ссылке — после подтверждения выполните вход.');
+  // clear sensitive inputs
+  setPassword('');
     } catch (e) {
       setError(e.message || String(e));
     } finally { setLoading(false); }
@@ -49,7 +56,8 @@ export default function AuthScreen() {
         <TextInput placeholder="Email" value={email} onChangeText={setEmail} style={styles.input} autoCapitalize="none" keyboardType="email-address" />
         <TextInput placeholder="Password" value={password} onChangeText={setPassword} style={styles.input} secureTextEntry />
 
-        {error ? <Text style={styles.err}>{error}</Text> : null}
+  {error ? <Text style={styles.err}>{error}</Text> : null}
+  {info ? <Text style={styles.info}>{info}</Text> : null}
 
         <View style={[styles.row, isNarrow && styles.rowStack]}>
           <Pressable onPress={doSignIn} style={[styles.btn, styles.primary, isNarrow && styles.btnFull]} disabled={loading}>

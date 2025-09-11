@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as tasksService from '../src/services/tasks';
+import * as projectsService from '../src/services/projects';
 
 /** ===== helpers ===== */
 const mapQuadrant = {
@@ -139,30 +140,68 @@ export const useTasks = create(
       loadRemote: async () => {
         set({ loading: true });
         try {
-          const remote = await tasksService.fetchTasks();
-          // simple replace strategy: overwrite local tasks with remote (could be merged)
-          set({ tasks: remote, loading: false });
+          // fetch projects + tasks in parallel
+          const [remoteProjects, remoteTasks] = await Promise.all([
+            projectsService.fetchProjects(),
+            tasksService.fetchTasks(),
+          ]);
+          // Replace local state with remote data (simple strategy)
+          set({ projects: [...new Set(['all', 'inbox', ...remoteProjects.map(p=>p.id)])].map(id => {
+            // try to find project object from remoteProjects
+            const p = remoteProjects.find(x=>x.id===id);
+            if (p) return p;
+            if (id === 'all') return { id: 'all', name: 'Все', emoji: '📁' };
+            if (id === 'inbox') return { id: 'inbox', name: 'Входящие', emoji: '🪄' };
+            return { id, name: id, emoji: '📁' };
+          }), tasks: remoteTasks, loading: false });
         } catch (e) {
           console.warn('loadRemote failed', e.message || e);
           set({ loading: false });
         }
       },
-      addProject: (name, emoji = '📁') => set((s) => {
+      addProject: (name, emoji = '📁') => {
         const n = (name || '').trim(); if (!n) return {};
         const newId = `prj_${makeId()}`;
-        return { projects: [...s.projects, { id: newId, name: n, emoji }] };
-      }),
+        // optimistic local insert
+        set((s) => ({ projects: [...s.projects, { id: newId, name: n, emoji }] }));
+        // remote create if logged in
+        (async () => {
+          try {
+            if (get().userId) {
+              await projectsService.createProject({ id: newId, name: n, emoji, user_id: get().userId });
+            }
+          } catch (e) {
+            console.warn('remote create project failed', e.message || e);
+          }
+        })();
+        return {};
+      },
       renameProject: (id, name, emoji) => set((s) => ({
         projects: s.projects.map(p => (p.id === id ? { ...p, name: name ?? p.name, emoji: emoji ?? p.emoji } : p)),
       })),
-      deleteProject: (id) => set((s) => {
-        if (id === 'all' || id === 'inbox') return {}; // системные
-        const fallback = 'inbox';
-        const projects = s.projects.filter(p => p.id !== id);
-        const tasks = s.tasks.map(t => (t.projectId === id ? { ...t, projectId: fallback } : t));
-        const selectedProjectId = s.selectedProjectId === id ? 'all' : s.selectedProjectId;
-        return { projects, tasks, selectedProjectId };
-      }),
+      // attempt remote update
+      renameProjectRemote: async (id, name, emoji) => {
+        try {
+          if (get().userId) await projectsService.updateProject(id, { name, emoji });
+        } catch (e) { console.warn('remote rename project failed', e.message || e); }
+      },
+      deleteProject: (id) => {
+        if (id === 'all' || id === 'inbox') return {};
+        // optimistic local delete
+        set((s) => {
+          const fallback = 'inbox';
+          const projects = s.projects.filter(p => p.id !== id);
+          const tasks = s.tasks.map(t => (t.projectId === id ? { ...t, projectId: fallback } : t));
+          const selectedProjectId = s.selectedProjectId === id ? 'all' : s.selectedProjectId;
+          return { projects, tasks, selectedProjectId };
+        });
+        (async () => {
+          try {
+            if (get().userId) await projectsService.deleteProject(id);
+          } catch (e) { console.warn('remote delete project failed', e.message || e); }
+        })();
+        return {};
+      },
     }),
     {
       name: '@tasklist/state:v3',
