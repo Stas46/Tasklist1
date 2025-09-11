@@ -117,8 +117,24 @@ export default function App() {
                 headerTitle: 'TaskList',
                 headerShadowVisible: false,
                 headerRight: () => (
-                  <Pressable onPress={doSignOut} hitSlop={8} style={({ pressed }) => [{ marginRight: 12 }, pressed && { opacity: 0.7 }]}>
-                    <Text style={{ fontSize: 18 }}>{userId ? '👤' : '🔒'}</Text>
+                  <Pressable
+                    onPress={doSignOut}
+                    accessibilityLabel={userId ? 'Profile menu' : 'Sign in'}
+                    hitSlop={8}
+                    style={({ pressed }) => [
+                      {
+                        marginRight: 12,
+                        width: 36,
+                        height: 36,
+                        borderRadius: 18,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#F2F3F5',
+                      },
+                      pressed && { opacity: 0.75 },
+                    ]}
+                  >
+                    <Text style={{ fontSize: 16, lineHeight: 18 }}>{userId ? '👤' : '🔒'}</Text>
                   </Pressable>
                 ),
               }}
