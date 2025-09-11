@@ -44,6 +44,19 @@ export default function TaskItem({
     } catch {}
   }, [onOpenContextMenu, task]);
 
+  // Web: also open context menu on long press (touch) at the touch coordinates
+  const handleLongPressWeb = useCallback((e) => {
+    if (Platform.OS !== 'web') return;
+    try {
+      // e.nativeEvent may have touches array
+      const ne = e?.nativeEvent ?? e;
+      const touch = (ne.touches && ne.touches[0]) || ne;
+      const nx = touch?.pageX ?? touch?.clientX ?? 0;
+      const ny = touch?.pageY ?? touch?.clientY ?? 0;
+      onOpenContextMenu?.(nx, ny, task);
+    } catch {}
+  }, [onOpenContextMenu, task]);
+
   const PillsRow = () => {
     if (!showPills) return null;
 
@@ -126,7 +139,7 @@ export default function TaskItem({
         friction={1.5}
       >
         <Pressable
-          onLongPress={() => { armGuard(); onLongPress?.(task); }}
+          onLongPress={(e) => { armGuard(); onLongPress?.(task); if (Platform.OS === 'web') handleLongPressWeb(e); }}
           delayLongPress={250}
           style={({ pressed }) => [
             styles.card,

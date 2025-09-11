@@ -19,7 +19,7 @@ import TasksScreen from './screens/TasksScreen';
 import DrawerProjects from './components/DrawerProjects';
 import { useTasks } from './store/useTasks';
 import AuthScreen from './screens/AuthScreen';
-import { onAuthStateChange } from './src/services/auth';
+import { onAuthStateChange, signOut } from './src/services/auth';
 
 const Drawer = createDrawerNavigator();
 
@@ -86,6 +86,14 @@ export default function App() {
 
   const userId = useTasks((s) => s.userId);
 
+  const doSignOut = async () => {
+    try {
+      await signOut();
+    } catch (e) {
+      console.warn('signOut failed', e?.message || e);
+    }
+  };
+
   if (!userId) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
@@ -108,6 +116,11 @@ export default function App() {
               screenOptions={{
                 headerTitle: 'TaskList',
                 headerShadowVisible: false,
+                headerRight: () => (
+                  <Pressable onPress={doSignOut} hitSlop={8} style={({ pressed }) => [{ marginRight: 12 }, pressed && { opacity: 0.7 }]}>
+                    <Text style={{ fontSize: 18 }}>{userId ? '👤' : '🔒'}</Text>
+                  </Pressable>
+                ),
               }}
               drawerContent={(props) => <DrawerProjects {...props} />}
             >

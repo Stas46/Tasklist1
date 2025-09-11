@@ -223,7 +223,7 @@ export default function TasksScreen() {
       {Platform.OS === 'web' && menu?.task && (
         <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
           <Pressable pointerEvents="box-only" style={StyleSheet.absoluteFill} onPress={closeMenu} />
-          <View style={[styles.ctxMenu, { top: menu.y, left: menu.x, maxHeight: menu.maxH }]}>
+          <View style={[styles.ctxMenu, { position: 'fixed', top: menu.y, left: menu.x, maxHeight: menu.maxH, maxWidth: 320 }]}>
             <CtxItem label={menu.task.done ? 'Снять отметку' : 'Отметить как готово'} onPress={handleCtxToggleDone} />
             <CtxItem label="Редактировать" onPress={handleCtxEdit} />
             <View style={styles.ctxSeparator} />
