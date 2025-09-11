@@ -2,7 +2,7 @@ name: Deploy web to GitHub Pages
 
 on:
   push:
-    branches: [ master ]   # если у тебя main — замени
+    branches: [ master ]   # если у тебя main — замени на main
   workflow_dispatch: {}
 
 permissions:
@@ -11,46 +11,25 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    # Все shell-команды выполняем из подпапки проекта
-    defaults:
-      run:
-        working-directory: tasklist
-
     steps:
       - uses: actions/checkout@v4
-
-      # Диагностика: покажем, где лежит lock-файл
-      - name: Show workspace tree
-        run: |
-          pwd
-          ls -la
-          ls -la ..
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-          # ВАЖНО: путь для кеша всегда указывать ОТ КОРНЯ РЕПО.
-          # Глоб подхватит tasklist/package-lock.json.
-          cache-dependency-path: '**/package-lock.json'
-
+          cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npx expo export --platform web
       - run: cp dist/index.html dist/404.html
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v3
         with:
-          # Путь ОТ КОРНЯ РЕПО, артефакт из подпроекта
-          path: tasklist/dist
+          path: dist
 
   deploy:
     needs: build
