@@ -42,3 +42,34 @@ create policy "update own" on public.tasks
 
 create policy "delete own" on public.tasks
   for delete using ( auth.uid() = user_id );
+
+-- ================================================
+-- Migration: convert project_id = 'inbox' => NULL
+-- Run this block in Supabase Dashboard -> SQL Editor -> New query
+-- It will create a backup of affected rows, show counts before/after and apply the UPDATE.
+-- You can inspect `public.tasks_backup_inbox` afterwards. No app restart required.
+BEGIN;
+
+-- 1) backup affected rows (overwrite any existing backup table)
+DROP TABLE IF EXISTS public.tasks_backup_inbox;
+CREATE TABLE public.tasks_backup_inbox AS
+  SELECT * FROM public.tasks WHERE project_id = 'inbox';
+
+-- 2) show how many rows we will change
+SELECT count(*) AS inbox_rows_before FROM public.tasks WHERE project_id = 'inbox';
+
+-- 3) perform the migration: set project_id to NULL for those rows
+UPDATE public.tasks
+SET project_id = NULL
+WHERE project_id = 'inbox';
+
+-- 4) verify
+SELECT count(*) AS inbox_rows_after FROM public.tasks WHERE project_id = 'inbox';
+
+COMMIT;
+
+-- Optional: if you also keep a `projects` table and want to remove a row with id = 'inbox', run the following
+-- only after confirming backups and that no legitimate project with id='inbox' should remain.
+-- DELETE FROM public.projects WHERE id = 'inbox';
+
+-- End of migration
