@@ -150,7 +150,7 @@ export default function TaskItem({
           <View style={styles.row}>
             <Pressable
               onPress={() => onToggleDone?.(task.id)}
-              hitSlop={8}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               style={({ pressed }) => [styles.checkbox, compact && styles.checkboxCompact, pressed && styles.checkboxPressed]}
             >
               <Text style={styles.checkboxText}>{task.done ? '✓' : ''}</Text>
@@ -186,7 +186,7 @@ export default function TaskItem({
             </View>
 
             {dragHandleProps ? (
-              <Pressable {...dragHandleProps} hitSlop={8} style={({ pressed }) => [styles.handle, pressed && styles.handlePressed]}>
+              <Pressable {...dragHandleProps} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={({ pressed }) => [styles.handle, pressed && styles.handlePressed]}>
                 <Text style={styles.handleText}>≡</Text>
               </Pressable>
             ) : null}
@@ -202,9 +202,9 @@ export default function TaskItem({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
-    padding: 12,
-    marginHorizontal: 12,
-    marginVertical: 6,
+  padding: 10,
+  marginHorizontal: 10,
+  marginVertical: 5,
     borderRadius: 14,
     shadowColor: '#000',
     shadowOpacity: 0.06,
