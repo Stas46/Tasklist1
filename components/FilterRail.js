@@ -11,6 +11,7 @@ export default function FilterRail() {
   } = useTasks();
 
   const isMatrix = viewMode === 'matrix';
+  const compactActive = isMatrix || !!compactMode;
   return (
     <View style={[s.wrap, isMatrix && s.noWrap]}>
       <View style={s.left}>
@@ -29,7 +30,7 @@ export default function FilterRail() {
       {isMatrix ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.right}>
           <Pill
-            active={true} // в матрице всегда компактно визуально
+            active={compactActive}
             label="🧩 Компактно"
             onPress={() => setCompactMode(!compactMode)}
           />
@@ -47,7 +48,7 @@ export default function FilterRail() {
       ) : (
         <View style={[s.right, { flexWrap: 'wrap' }]}>
           <Pill
-            active={!!compactMode}
+            active={compactActive}
             label="🧩 Компактно"
             onPress={() => setCompactMode(!compactMode)}
           />

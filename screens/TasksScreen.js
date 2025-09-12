@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
   cellTitle: { fontSize: 12, color: '#333', fontWeight: '700' },
   cellScroll: { flex: 1 },
 
-  qPlus: { position: 'absolute', alignSelf: 'center', left: 0, right: 0, bottom: 10, width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111' },
+  qPlus: { position: 'absolute', left: '50%', bottom: 10, width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111', transform: [{ translateX: -18 }] },
   qPlusText: { color: '#fff', fontSize: 18, lineHeight: 18, fontWeight: '700' },
 
   ctxMenu: {
