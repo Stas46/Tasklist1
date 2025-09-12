@@ -29,7 +29,7 @@ export default function FilterRail() {
       {isMatrix ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.right}>
           <Pill
-            active={!!compactMode}
+            active={true} // в матрице всегда компактно визуально
             label="🧩 Компактно"
             onPress={() => setCompactMode(!compactMode)}
           />
