@@ -44,7 +44,6 @@ export const useTasks = create(
       /** ===== модель ===== */
       projects: [
         { id: 'all',   name: 'Все',       emoji: '📁' },
-        { id: 'inbox', name: 'Входящие',  emoji: '🪄' },
       ],
       selectedProjectId: 'all',
       viewMode: 'list', // 'list' | 'matrix'
@@ -69,13 +68,15 @@ export const useTasks = create(
         const t = (title || '').trim();
         if (!t) return;
         const patch = opts.quadrant && mapQuadrant[opts.quadrant] ? mapQuadrant[opts.quadrant] : {};
+  // debug: trace what quadrant/key is used when creating a task
+  try { console.debug('[useTasks] addTask', { title: t, quadrantKey: opts.quadrant, patch }); } catch (e) {}
         const localTask = {
           id: makeId(),
           title: t,
           important: !!patch.important,
           urgent: !!patch.urgent,
           done: false,
-          projectId: opts.projectId || get().selectedProjectId || 'inbox',
+          projectId: (opts.projectId ?? (get().selectedProjectId === 'all' ? null : get().selectedProjectId)) || null,
           createdAt: new Date().toISOString(),
         };
         // optimistic local insert
@@ -146,12 +147,11 @@ export const useTasks = create(
             tasksService.fetchTasks(),
           ]);
           // Replace local state with remote data (simple strategy)
-          set({ projects: [...new Set(['all', 'inbox', ...remoteProjects.map(p=>p.id)])].map(id => {
+          set({ projects: [...new Set(['all', ...remoteProjects.map(p=>p.id)])].map(id => {
             // try to find project object from remoteProjects
             const p = remoteProjects.find(x=>x.id===id);
             if (p) return p;
             if (id === 'all') return { id: 'all', name: 'Все', emoji: '📁' };
-            if (id === 'inbox') return { id: 'inbox', name: 'Входящие', emoji: '🪄' };
             return { id, name: id, emoji: '📁' };
           }), tasks: remoteTasks, loading: false });
         } catch (e) {
@@ -186,10 +186,10 @@ export const useTasks = create(
         } catch (e) { console.warn('remote rename project failed', e.message || e); }
       },
       deleteProject: (id) => {
-        if (id === 'all' || id === 'inbox') return {};
+        if (id === 'all') return {};
         // optimistic local delete
         set((s) => {
-          const fallback = 'inbox';
+          const fallback = null;
           const projects = s.projects.filter(p => p.id !== id);
           const tasks = s.tasks.map(t => (t.projectId === id ? { ...t, projectId: fallback } : t));
           const selectedProjectId = s.selectedProjectId === id ? 'all' : s.selectedProjectId;

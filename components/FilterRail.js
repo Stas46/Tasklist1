@@ -92,6 +92,7 @@ const s = StyleSheet.create({
     backgroundColor: '#F2F3F5',
   },
   pillOn: { backgroundColor: '#E6E6E6' },
+  pillOn: { backgroundColor: '#111', borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)' },
   pillText: { fontSize: 12, color: '#333', fontWeight: '600' },
-  pillTextOn: { color: '#111' },
+  pillTextOn: { color: '#fff' },
 });

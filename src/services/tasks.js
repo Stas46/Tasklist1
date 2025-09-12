@@ -23,6 +23,7 @@ export async function createTask(t) {
     project_id: t.projectId || null,
     user_id: t.user_id || undefined,
   };
+  try { console.debug('[tasksService] createTask toInsert.quadrant=', toInsert.quadrant, 'local', { important: t.important, urgent: t.urgent, quadrantKey: t.quadrant }); } catch(e) {}
   const { data, error } = await supabase.from('tasks').insert(toInsert).select().single();
   if (error) throw error;
   return normalizeFromDb(data);
@@ -52,7 +53,7 @@ function normalizeFromDb(row) {
     done: !!row.done,
     important: quadrantFromDb(row.quadrant).important,
     urgent: quadrantFromDb(row.quadrant).urgent,
-    projectId: row.project_id || 'inbox',
+  projectId: row.project_id || null,
     createdAt: row.created_at || row.updated_at,
     updated_at: row.updated_at,
   };
