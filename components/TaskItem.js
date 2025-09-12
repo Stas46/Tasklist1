@@ -195,9 +195,8 @@ const styles = StyleSheet.create({
   marginHorizontal: 10,
   marginVertical: 5,
     borderRadius: 14,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
+    // web-friendly shadow
+    boxShadow: '0 4px 10px rgba(0,0,0,0.06)',
     elevation: 2,
   },
   // компактнее карточка в матрице

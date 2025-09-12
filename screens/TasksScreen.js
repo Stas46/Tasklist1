@@ -358,7 +358,7 @@ function ListSection({ title, tint, bg, data, renderItem, onAdd }) {
         <View style={[styles.cellHeader, { backgroundColor: tint, borderTopLeftRadius: 10, borderTopRightRadius: 10, marginBottom: 0 }]}> 
           <Text style={styles.cellTitle}>{title} ({data.length})</Text>
         </View>
-        <FlatList data={data} keyExtractor={(t) => t.id} renderItem={renderTaskList} contentContainerStyle={{ paddingVertical: 6 }} />
+  <FlatList data={data} keyExtractor={(t) => t.id} renderItem={renderItem} contentContainerStyle={{ paddingVertical: 6 }} />
       </View>
       <Pressable onPress={onAdd} hitSlop={8} style={({ pressed }) => [styles.qPlus, pressed && { opacity: 0.85 }, { alignSelf: 'flex-start', marginLeft: 6 }]}>
         <Text style={styles.qPlusText}>＋</Text>
