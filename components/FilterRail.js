@@ -77,9 +77,10 @@ const s = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     gap: 10,
+    flexWrap: 'wrap',           // переносим на 2 строки при нехватке места
   },
-  left: { flexDirection: 'row', gap: 8, flex: 1 },
-  right: { flexDirection: 'row', gap: 8 },
+  left: { flexDirection: 'row', gap: 8, flexShrink: 0 },
+  right: { flexDirection: 'row', gap: 8, flexShrink: 1 },
 
   segment: {
     paddingHorizontal: 12,

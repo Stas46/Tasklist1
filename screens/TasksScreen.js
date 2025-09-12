@@ -188,6 +188,9 @@ export default function TasksScreen() {
     [projects, showProjectBadge]
   );
 
+  const isMatrix = viewMode === 'matrix';
+  const compact = isMatrix || compactModeGlobal;
+
   const renderTaskList = useCallback(
     ({ item }) => (
       <TaskItem
@@ -200,17 +203,19 @@ export default function TasksScreen() {
         showProjectBadge={showProjectBadge}
         projectBadge={getProjectBadge(item)}
         // В матрице всегда компактно; в списке — по глобальному флагу
-        compact={viewMode === 'matrix' || compactModeGlobal}
+        compact={isMatrix || compactModeGlobal}
+        // Показывать плашки/иконки приоритетов: в матрице — скрываем; в списке — только когда не компактно
+        showPills={!isMatrix && !compactModeGlobal}
       />
     ),
-    [toggleDone, doDelete, editTitle, openMovePicker, openContextMenu, showProjectBadge, getProjectBadge, viewMode, compactModeGlobal]
+    [toggleDone, doDelete, editTitle, openMovePicker, openContextMenu, showProjectBadge, getProjectBadge, isMatrix, compactModeGlobal]
   );
 
   return (
     <View style={styles.container}>
       <FilterRail />
 
-      {viewMode === 'matrix' ? (
+      {isMatrix ? (
         <View style={styles.grid}>
           <QuadrantCell compact title="⭐⚡ Важно + Срочно" tint="#FFC5CF" bg="rgba(255,197,207,0.45)" data={groups.uv} renderItem={renderTaskList} onAdd={() => openAddForQuadrant('uv')} />
           <QuadrantCell compact title="⭐ Важно"          tint="#FFE8A3" bg="rgba(255,232,163,0.45)" data={groups.v}  renderItem={renderTaskList} onAdd={() => openAddForQuadrant('v')} />
@@ -218,7 +223,17 @@ export default function TasksScreen() {
           <QuadrantCell compact title="• Остальное"       tint="#D9F5E5" bg="rgba(217,245,229,0.55)" data={groups.o}  renderItem={renderTaskList} onAdd={() => openAddForQuadrant('o')} />
         </View>
       ) : (
-        <FlatList data={tasks} keyExtractor={(t) => t.id} renderItem={renderTaskList} contentContainerStyle={{ paddingVertical: compactModeGlobal ? 2 : 6 }} />
+        // В списке: если включён компактный режим — четырьмя вертикальными секциями (uv, v, u, o)
+        compact ? (
+          <ScrollView contentContainerStyle={{ paddingBottom: 12 }}>
+            <ListSection title="⭐⚡ Важно + Срочно" tint="#FFC5CF" bg="rgba(255,197,207,0.28)" data={groups.uv} renderItem={renderTaskList} onAdd={() => openAddForQuadrant('uv')} />
+            <ListSection title="⭐ Важно"          tint="#FFE8A3" bg="rgba(255,232,163,0.28)" data={groups.v}  renderItem={renderTaskList} onAdd={() => openAddForQuadrant('v')} />
+            <ListSection title="⚡ Срочно"         tint="#D8EFFD" bg="rgba(216,239,253,0.28)" data={groups.u}  renderItem={renderTaskList} onAdd={() => openAddForQuadrant('u')} />
+            <ListSection title="• Остальное"       tint="#D9F5E5" bg="rgba(217,245,229,0.35)" data={groups.o}  renderItem={renderTaskList} onAdd={() => openAddForQuadrant('o')} />
+          </ScrollView>
+        ) : (
+          <FlatList data={tasks} keyExtractor={(t) => t.id} renderItem={renderTaskList} contentContainerStyle={{ paddingVertical: 6 }} />
+        )
       )}
 
       {/* Контекст-меню (web) */}
@@ -335,6 +350,23 @@ function QuadrantCell({ title, tint, bg, data, renderItem, onAdd }) {
   );
 }
 
+// Вертикальная секция для компактного списка
+function ListSection({ title, tint, bg, data, renderItem, onAdd }) {
+  return (
+    <View style={{ paddingHorizontal: 8, marginBottom: 10 }}>
+      <View style={{ backgroundColor: bg, borderColor: tint, borderWidth: 2, borderRadius: 12 }}>
+        <View style={[styles.cellHeader, { backgroundColor: tint, borderTopLeftRadius: 10, borderTopRightRadius: 10, marginBottom: 0 }]}> 
+          <Text style={styles.cellTitle}>{title} ({data.length})</Text>
+        </View>
+        <FlatList data={data} keyExtractor={(t) => t.id} renderItem={renderTaskList} contentContainerStyle={{ paddingVertical: 6 }} />
+      </View>
+      <Pressable onPress={onAdd} hitSlop={8} style={({ pressed }) => [styles.qPlus, pressed && { opacity: 0.85 }, { alignSelf: 'flex-start', marginLeft: 6 }]}>
+        <Text style={styles.qPlusText}>＋</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 function CtxItem({ label, onPress, danger }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.ctxItem, pressed && { backgroundColor: '#F5F5F7' }]}>
@@ -349,11 +381,11 @@ const styles = StyleSheet.create({
   grid: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', padding: 6 },
   cell: { width: '50%', height: '50%', padding: 4, borderWidth: 2, borderRadius: 12, position: 'relative', overflow: 'hidden' },
   cellHeader: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginBottom: 6 },
-  cellTitle: { fontSize: 13, color: '#333', fontWeight: '700' },
+  cellTitle: { fontSize: 12, color: '#333', fontWeight: '700' },
   cellScroll: { flex: 1 },
 
   qPlus: { position: 'absolute', alignSelf: 'center', left: 0, right: 0, bottom: 10, width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111' },
-  qPlusText: { color: '#fff', fontSize: 20, lineHeight: 20, fontWeight: '700' },
+  qPlusText: { color: '#fff', fontSize: 18, lineHeight: 18, fontWeight: '700' },
 
   ctxMenu: {
     position: 'absolute',

@@ -59,29 +59,18 @@ export default function TaskItem({
 
   const PillsRow = () => {
     if (!showPills) return null;
-
-    // В матрице (compact) — только иконки
-    if (compact) {
+    // По требованию иконки/плашки приоритетов не показываем ни в одном режиме
+    // (оставляем только бейдж проекта в некопактном списке, если включён)
+    if (!compact && showProjectBadge && projectBadge) {
       return (
         <View style={styles.pillsIcons}>
-          {showProjectBadge && projectBadge ? (
-            <Text style={[styles.iconChip, styles.iconProject]} accessibilityLabel={projectBadge.name}>
-              {projectBadge.emoji ?? '📁'}
-            </Text>
-          ) : null}
-          {task.important ? <Text style={[styles.iconChip, styles.iconImportant]}>⭐</Text> : null}
-          {task.urgent ? <Text style={[styles.iconChip, styles.iconUrgent]}>⚡</Text> : null}
+          <Text style={[styles.iconChip, styles.iconProject]} accessibilityLabel={projectBadge.name}>
+            {projectBadge.emoji ?? '📁'}
+          </Text>
         </View>
       );
     }
-
-    // В списке — плашки с текстом
-    return (
-      <View style={styles.pillsText}>
-        {task.important ? <Text style={[styles.pill, styles.pillImportant]}>⭐ Важно</Text> : null}
-        {task.urgent ? <Text style={[styles.pill, styles.pillUrgent]}>⚡ Срочно</Text> : null}
-      </View>
-    );
+    return null;
   };
 
   const ProjectBadge = () => {
@@ -219,21 +208,21 @@ const styles = StyleSheet.create({
   titleWrap: { flex: 1, paddingRight: 8 },
   titleWrapCompact: { paddingRight: 4 },
   title: { fontSize: 16, color: '#111' },
-  titleCompact: { fontSize: 14, lineHeight: 18 },       // меньше шрифт/высота
+  titleCompact: { fontSize: 13, lineHeight: 17 },       // ещё компактнее на мобилках
   done: { textDecorationLine: 'line-through', color: '#999' },
 
   input: {
     borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: '#D9D9DF',
     paddingHorizontal: 10, paddingVertical: 6,
   },
-  inputCompact: { paddingVertical: 4, fontSize: 14 },
+  inputCompact: { paddingVertical: 3, fontSize: 13 },
 
   checkbox: {
     width: 22, height: 22, borderRadius: 6,
     borderWidth: 2, borderColor: '#d1d5db', alignItems: 'center', justifyContent: 'center',
     marginRight: 10,
   },
-  checkboxCompact: { width: 18, height: 18, marginRight: 8 },     // меньше чекбокс
+  checkboxCompact: { width: 16, height: 16, marginRight: 8 },     // ещё меньше чекбокс
   checkboxPressed: { opacity: 0.6 },
   checkboxText: { fontSize: 14, color: '#111' },
 
@@ -247,7 +236,7 @@ const styles = StyleSheet.create({
   pillImportant: { backgroundColor: '#FFF3C4', color: '#8A6D00' },
   pillUrgent: { backgroundColor: '#E6F3FF', color: '#004A7A' },
 
-  // иконки в матрице — ещё компактнее
+  // компактный ряд мини-иконок (сейчас используем только для бейджа проекта)
   pillsIcons: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
   iconChip: {
   fontSize: 10,
@@ -255,8 +244,6 @@ const styles = StyleSheet.create({
     borderRadius: 999, overflow: 'hidden',
   },
   iconProject: { backgroundColor: '#F2F3F5', color: '#333' },
-  iconImportant: { backgroundColor: '#FFE8A3', color: '#6A5200' },
-  iconUrgent: { backgroundColor: '#D8EFFD', color: '#0E4775' },
 
   footer: { marginTop: 8, flexDirection: 'row', alignItems: 'center' },
   badge: { alignSelf: 'flex-start', backgroundColor: '#F2F3F5', borderRadius: 999, paddingVertical: 4, paddingHorizontal: 10 },
