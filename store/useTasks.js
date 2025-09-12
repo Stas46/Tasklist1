@@ -48,6 +48,9 @@ export const useTasks = create(
       selectedProjectId: 'all',
       viewMode: 'list', // 'list' | 'matrix'
 
+  // Компактный режим для мобильных (уменьшенные отступы/шрифты)
+  compactMode: Platform.OS !== 'web',
+
       filterImportant: false,
       filterUrgent: false,
 
@@ -60,6 +63,8 @@ export const useTasks = create(
       /** ===== actions ===== */
       setSelectedProject: (projectId) => set({ selectedProjectId: projectId || 'all' }),
       setViewMode: (mode) => set({ viewMode: mode }),
+
+  setCompactMode: (v) => set({ compactMode: !!v }),
 
       setFilterImportant: (v) => set({ filterImportant: !!v }),
       setFilterUrgent: (v) => set({ filterUrgent: !!v }),
@@ -211,6 +216,7 @@ export const useTasks = create(
         projects: s.projects,
         selectedProjectId: s.selectedProjectId,
         viewMode: s.viewMode,
+        compactMode: s.compactMode,
         filterImportant: s.filterImportant,
         filterUrgent: s.filterUrgent,
       }),

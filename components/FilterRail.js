@@ -7,6 +7,7 @@ export default function FilterRail() {
     viewMode, setViewMode,
     filterImportant, setFilterImportant,
     filterUrgent, setFilterUrgent,
+    compactMode, setCompactMode,
   } = useTasks();
 
   return (
@@ -25,6 +26,11 @@ export default function FilterRail() {
       </View>
 
       <View style={s.right}>
+        <Pill
+          active={!!compactMode}
+          label="🧩 Компактно"
+          onPress={() => setCompactMode(!compactMode)}
+        />
         <Pill
           active={!!filterImportant}
           label="⭐ Важно"
@@ -68,9 +74,9 @@ const s = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    gap: 10,
   },
   left: { flexDirection: 'row', gap: 8, flex: 1 },
   right: { flexDirection: 'row', gap: 8 },
@@ -91,7 +97,6 @@ const s = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: '#F2F3F5',
   },
-  pillOn: { backgroundColor: '#E6E6E6' },
   pillOn: { backgroundColor: '#111', borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)' },
   pillText: { fontSize: 12, color: '#333', fontWeight: '600' },
   pillTextOn: { color: '#fff' },

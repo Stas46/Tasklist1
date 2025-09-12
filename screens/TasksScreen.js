@@ -13,6 +13,7 @@ import { useTasks, sortTasks, qKeyOf } from '../store/useTasks';
 
 export default function TasksScreen() {
   const viewMode          = useTasks((s) => s.viewMode);
+  const compactModeGlobal = useTasks((s) => s.compactMode);
   const tasksRaw          = useTasks((s) => s.tasks);
   const selectedProjectId = useTasks((s) => s.selectedProjectId);
   const projects          = useTasks((s) => s.projects);
@@ -198,10 +199,11 @@ export default function TasksScreen() {
         onOpenContextMenu={openContextMenu}
         showProjectBadge={showProjectBadge}
         projectBadge={getProjectBadge(item)}
-        compact={viewMode === 'matrix'}   // компактный вид в матрице
+        // В матрице всегда компактно; в списке — по глобальному флагу
+        compact={viewMode === 'matrix' || compactModeGlobal}
       />
     ),
-    [toggleDone, doDelete, editTitle, openMovePicker, openContextMenu, showProjectBadge, getProjectBadge, viewMode]
+    [toggleDone, doDelete, editTitle, openMovePicker, openContextMenu, showProjectBadge, getProjectBadge, viewMode, compactModeGlobal]
   );
 
   return (
@@ -210,13 +212,13 @@ export default function TasksScreen() {
 
       {viewMode === 'matrix' ? (
         <View style={styles.grid}>
-          <QuadrantCell title="⭐⚡ Важно + Срочно" tint="#FFC5CF" bg="rgba(255,197,207,0.45)" data={groups.uv} renderItem={renderTaskList} onAdd={() => openAddForQuadrant('uv')} />
-          <QuadrantCell title="⭐ Важно"          tint="#FFE8A3" bg="rgba(255,232,163,0.45)" data={groups.v}  renderItem={renderTaskList} onAdd={() => openAddForQuadrant('v')} />
-          <QuadrantCell title="⚡ Срочно"         tint="#D8EFFD" bg="rgba(216,239,253,0.45)" data={groups.u}  renderItem={renderTaskList} onAdd={() => openAddForQuadrant('u')} />
-          <QuadrantCell title="• Остальное"       tint="#D9F5E5" bg="rgba(217,245,229,0.55)" data={groups.o}  renderItem={renderTaskList} onAdd={() => openAddForQuadrant('o')} />
+          <QuadrantCell compact title="⭐⚡ Важно + Срочно" tint="#FFC5CF" bg="rgba(255,197,207,0.45)" data={groups.uv} renderItem={renderTaskList} onAdd={() => openAddForQuadrant('uv')} />
+          <QuadrantCell compact title="⭐ Важно"          tint="#FFE8A3" bg="rgba(255,232,163,0.45)" data={groups.v}  renderItem={renderTaskList} onAdd={() => openAddForQuadrant('v')} />
+          <QuadrantCell compact title="⚡ Срочно"         tint="#D8EFFD" bg="rgba(216,239,253,0.45)" data={groups.u}  renderItem={renderTaskList} onAdd={() => openAddForQuadrant('u')} />
+          <QuadrantCell compact title="• Остальное"       tint="#D9F5E5" bg="rgba(217,245,229,0.55)" data={groups.o}  renderItem={renderTaskList} onAdd={() => openAddForQuadrant('o')} />
         </View>
       ) : (
-        <FlatList data={tasks} keyExtractor={(t) => t.id} renderItem={renderTaskList} contentContainerStyle={{ paddingVertical: 6 }} />
+        <FlatList data={tasks} keyExtractor={(t) => t.id} renderItem={renderTaskList} contentContainerStyle={{ paddingVertical: compactModeGlobal ? 2 : 6 }} />
       )}
 
       {/* Контекст-меню (web) */}
