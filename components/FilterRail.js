@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useTasks } from '../store/useTasks';
 
 export default function FilterRail() {
@@ -10,8 +10,9 @@ export default function FilterRail() {
     compactMode, setCompactMode,
   } = useTasks();
 
+  const isMatrix = viewMode === 'matrix';
   return (
-    <View style={s.wrap}>
+    <View style={[s.wrap, isMatrix && s.noWrap]}>
       <View style={s.left}>
         <Segment
           active={viewMode === 'list'}
@@ -25,23 +26,43 @@ export default function FilterRail() {
         />
       </View>
 
-      <View style={s.right}>
-        <Pill
-          active={!!compactMode}
-          label="🧩 Компактно"
-          onPress={() => setCompactMode(!compactMode)}
-        />
-        <Pill
-          active={!!filterImportant}
-          label="⭐ Важно"
-          onPress={() => setFilterImportant(!filterImportant)}
-        />
-        <Pill
-          active={!!filterUrgent}
-          label="⚡ Срочно"
-          onPress={() => setFilterUrgent(!filterUrgent)}
-        />
-      </View>
+      {isMatrix ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.right}>
+          <Pill
+            active={!!compactMode}
+            label="🧩 Компактно"
+            onPress={() => setCompactMode(!compactMode)}
+          />
+          <Pill
+            active={!!filterImportant}
+            label="⭐ Важно"
+            onPress={() => setFilterImportant(!filterImportant)}
+          />
+          <Pill
+            active={!!filterUrgent}
+            label="⚡ Срочно"
+            onPress={() => setFilterUrgent(!filterUrgent)}
+          />
+        </ScrollView>
+      ) : (
+        <View style={[s.right, { flexWrap: 'wrap' }]}>
+          <Pill
+            active={!!compactMode}
+            label="🧩 Компактно"
+            onPress={() => setCompactMode(!compactMode)}
+          />
+          <Pill
+            active={!!filterImportant}
+            label="⭐ Важно"
+            onPress={() => setFilterImportant(!filterImportant)}
+          />
+          <Pill
+            active={!!filterUrgent}
+            label="⚡ Срочно"
+            onPress={() => setFilterUrgent(!filterUrgent)}
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -77,10 +98,11 @@ const s = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     gap: 10,
-    flexWrap: 'wrap',           // переносим на 2 строки при нехватке места
+    flexWrap: 'wrap',
   },
+  noWrap: { flexWrap: 'nowrap' },
   left: { flexDirection: 'row', gap: 8, flexShrink: 0 },
-  right: { flexDirection: 'row', gap: 8, flexShrink: 1 },
+  right: { flexDirection: 'row', gap: 8, flexShrink: 1, alignItems: 'center' },
 
   segment: {
     paddingHorizontal: 12,

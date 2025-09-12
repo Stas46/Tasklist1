@@ -7,7 +7,7 @@ export default function Fab({ onPress, bottom }) {
   const insets = useSafeAreaInsets();
   const effectiveBottom = typeof bottom === 'number' ? bottom : (insets.bottom ? insets.bottom + 12 : 24);
   return (
-    <View style={[StyleSheet.absoluteFill, { pointerEvents: 'box-none' }]}>
+    <View pointerEvents="box-none" style={[StyleSheet.absoluteFill]}>
       <TouchableOpacity
         onPress={onPress}
         activeOpacity={0.9}
