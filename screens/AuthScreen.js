@@ -11,6 +11,7 @@ export default function AuthScreen() {
   const [info, setInfo] = useState(null);
 
   const userId = useTasks((s) => s.userId);
+  const userEmail = useTasks((s) => s.userEmail);
   const { width } = useWindowDimensions();
   const isNarrow = width < 520;
 
@@ -60,17 +61,33 @@ export default function AuthScreen() {
   {info ? <Text style={styles.info}>{info}</Text> : null}
 
         <View style={[styles.row, isNarrow && styles.rowStack]}>
-          <Pressable onPress={doSignIn} style={[styles.btn, styles.primary, isNarrow && styles.btnFull]} disabled={loading}>
+          <Pressable
+            onPress={doSignIn}
+            style={[
+              styles.btn,
+              styles.primary,
+              isNarrow ? styles.btnFull : { marginRight: 8 }
+            ]}
+            disabled={loading}
+          >
             <Text style={styles.btnText}>Sign In</Text>
           </Pressable>
-          <Pressable onPress={doSignUp} style={[styles.btn, styles.ghost, isNarrow && styles.btnFull, isNarrow && { marginTop: 8 }]} disabled={loading}>
+          <Pressable
+            onPress={doSignUp}
+            style={[
+              styles.btn,
+              styles.ghost,
+              isNarrow ? [styles.btnFull, { marginTop: 8 }] : null
+            ]}
+            disabled={loading}
+          >
             <Text style={styles.ghostText}>Sign Up</Text>
           </Pressable>
         </View>
 
         {userId && (
           <View style={{ marginTop: 12 }}>
-            <Text style={styles.info}>Signed in as: {userId}</Text>
+            <Text style={styles.info}>Signed in as: {userEmail || userId}</Text>
             <Pressable onPress={doSignOut} style={[styles.btn, { marginTop: 8 }]}>
               <Text style={styles.btnText}>Sign Out</Text>
             </Pressable>
@@ -88,7 +105,7 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 18, elevation: 2, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width:0, height:6 } },
   title: { fontSize: 20, fontWeight: '700', marginBottom: 14, textAlign: 'center' },
   input: { borderWidth: StyleSheet.hairlineWidth, borderColor: '#DDD', padding: 12, borderRadius: 8, marginBottom: 10 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+  row: { flexDirection: 'row', justifyContent: 'space-between' },
   rowStack: { flexDirection: 'column' },
   btn: { flex: 1, padding: 12, borderRadius: 8, alignItems: 'center' },
   btnFull: { width: '100%' },

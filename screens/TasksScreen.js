@@ -223,16 +223,37 @@ export default function TasksScreen() {
           <QuadrantCell compact title="• Остальное"       tint="#D9F5E5" bg="rgba(217,245,229,0.55)" data={groups.o}  renderItem={renderTaskList} onAdd={() => openAddForQuadrant('o')} />
         </View>
       ) : (
-        // В списке: если включён компактный режим — четырьмя вертикальными секциями (uv, v, u, o)
+        // В списке: если включён компактный режим — показываем простой компактный список (единый FlatList)
         compact ? (
-          <ScrollView contentContainerStyle={{ paddingBottom: 12 }}>
-            <ListSection title="⭐⚡ Важно + Срочно" tint="#FFC5CF" bg="rgba(255,197,207,0.28)" data={groups.uv} renderItem={renderTaskList} onAdd={() => openAddForQuadrant('uv')} />
-            <ListSection title="⭐ Важно"          tint="#FFE8A3" bg="rgba(255,232,163,0.28)" data={groups.v}  renderItem={renderTaskList} onAdd={() => openAddForQuadrant('v')} />
-            <ListSection title="⚡ Срочно"         tint="#D8EFFD" bg="rgba(216,239,253,0.28)" data={groups.u}  renderItem={renderTaskList} onAdd={() => openAddForQuadrant('u')} />
-            <ListSection title="• Остальное"       tint="#D9F5E5" bg="rgba(217,245,229,0.35)" data={groups.o}  renderItem={renderTaskList} onAdd={() => openAddForQuadrant('o')} />
-          </ScrollView>
+          <FlatList
+            data={tasks}
+            keyExtractor={(t) => t.id}
+            renderItem={renderTaskList}
+            contentContainerStyle={{ paddingVertical: 6 }}
+          />
         ) : (
-          <FlatList data={tasks} keyExtractor={(t) => t.id} renderItem={renderTaskList} contentContainerStyle={{ paddingVertical: 6 }} />
+          // В обычном (не компактном) режиме — деление на секции через SectionList
+          <SectionList
+            sections={[ 
+              { title: '⭐⚡ Важно + Срочно', tint: '#FFC5CF', bg: 'rgba(255,197,207,0.28)', data: groups.uv, key: 'uv' },
+              { title: '⭐ Важно',           tint: '#FFE8A3', bg: 'rgba(255,232,163,0.28)', data: groups.v,  key: 'v' },
+              { title: '⚡ Срочно',          tint: '#D8EFFD', bg: 'rgba(216,239,253,0.28)', data: groups.u,  key: 'u' },
+              { title: '• Остальное',        tint: '#D9F5E5', bg: 'rgba(217,245,229,0.35)', data: groups.o,  key: 'o' },
+            ]}
+            keyExtractor={(item) => item.id}
+            renderItem={renderTaskList}
+            renderSectionHeader={({ section }) => (
+              <View style={{ paddingHorizontal: 8, marginBottom: 2 }}>
+                <View style={{ backgroundColor: section.bg, borderColor: section.tint, borderWidth: 2, borderRadius: 12 }}>
+                  <View style={[styles.cellHeader, { backgroundColor: section.tint, borderTopLeftRadius: 10, borderTopRightRadius: 10, marginBottom: 0 }]}> 
+                    <Text style={styles.cellTitle}>{section.title} ({section.data.length})</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+            contentContainerStyle={{ paddingBottom: 12 }}
+            stickySectionHeadersEnabled={false}
+          />
         )
       )}
 

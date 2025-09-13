@@ -2,7 +2,7 @@
 import 'react-native-gesture-handler';
 
 import React, { Component, useMemo } from 'react';
-import { Platform, View, Text, StyleSheet, Pressable } from 'react-native';
+import { Platform, View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 
 // ✅ На native Reanimated обязателен, на web — отключаем
 if (Platform.OS !== 'web') {
@@ -48,6 +48,65 @@ function ProjectHeaderChip({ onPress }) {
   );
 }
 
+// Компонент меню пользователя (иконка в правом верхнем углу)
+function UserMenu({ userId, email, onSignOut }) {
+  // Для web: показываем всплывающее меню при клике/наведении
+  if (Platform.OS === 'web') {
+    const [open, setOpen] = React.useState(false);
+    const ref = React.useRef(null);
+    // Закрывать при клике вне
+    React.useEffect(() => {
+      function onDoc(e) {
+        if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      }
+      document.addEventListener('mousedown', onDoc);
+      return () => document.removeEventListener('mousedown', onDoc);
+    }, []);
+
+    return (
+      <View ref={ref} style={{ marginRight: 12 }}>
+        <Pressable onPress={() => setOpen(s => !s)} hitSlop={8} style={({ pressed }) => [{ width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F2F3F5' }, pressed && { opacity: 0.75 }]}>
+          <Text style={{ fontSize: 16, lineHeight: 18 }}>{userId ? '👤' : '🔒'}</Text>
+        </Pressable>
+        {open && (
+          <View style={{ position: 'fixed', right: 12, top: 56, backgroundColor: '#fff', borderRadius: 10, padding: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: '#E6E6E6', boxShadow: '0 10px 30px rgba(0,0,0,0.12)' }}>
+            <Text style={{ fontSize: 13, color: '#666', marginBottom: 8 }}>Signed in as</Text>
+            <Text style={{ fontSize: 14, fontWeight: '700', marginBottom: 8 }}>{email || userId || '—'}</Text>
+            <Pressable onPress={onSignOut} style={({ pressed }) => [{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, backgroundColor: '#F2F3F5' }, pressed && { opacity: 0.8 }]}>
+              <Text style={{ fontWeight: '700' }}>Log out</Text>
+            </Pressable>
+          </View>
+        )}
+      </View>
+    );
+  }
+
+  // На native: просто показываем иконку, при нажатии — Alert с подтверждением выхода
+  const onPressNative = () => {
+    Alert.alert('Account', userId ? `Signed in as ${email || userId}` : 'Not signed in', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Log out', style: 'destructive', onPress: onSignOut },
+    ]);
+  };
+
+  return (
+    <Pressable onPress={onPressNative} hitSlop={8} style={({ pressed }) => [
+      {
+        marginRight: 12,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#F2F3F5',
+      },
+      pressed && { opacity: 0.75 },
+    ]}>
+      <Text style={{ fontSize: 16, lineHeight: 18 }}>{userId ? '👤' : '🔒'}</Text>
+    </Pressable>
+  );
+}
+
 // Простой ErrorBoundary, чтобы вместо белого экрана видеть ошибку
 class AppErrorBoundary extends Component {
   state = { error: null };
@@ -85,6 +144,7 @@ export default function App() {
   }, [setUser]);
 
   const userId = useTasks((s) => s.userId);
+  const userEmail = useTasks((s) => s.userEmail);
 
   const doSignOut = async () => {
     try {
@@ -117,25 +177,7 @@ export default function App() {
                 headerTitle: 'TaskList',
                 headerShadowVisible: false,
                 headerRight: () => (
-                  <Pressable
-                    onPress={doSignOut}
-                    accessibilityLabel={userId ? 'Profile menu' : 'Sign in'}
-                    hitSlop={8}
-                    style={({ pressed }) => [
-                      {
-                        marginRight: 12,
-                        width: 36,
-                        height: 36,
-                        borderRadius: 18,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: '#F2F3F5',
-                      },
-                      pressed && { opacity: 0.75 },
-                    ]}
-                  >
-                    <Text style={{ fontSize: 16, lineHeight: 18 }}>{userId ? '👤' : '🔒'}</Text>
-                  </Pressable>
+                  <UserMenu userId={userId} email={userEmail} onSignOut={doSignOut} />
                 ),
               }}
               drawerContent={(props) => <DrawerProjects {...props} />}

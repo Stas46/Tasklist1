@@ -40,6 +40,7 @@ export const useTasks = create(
     (set, get) => ({
   // ===== remote sync fields =====
   userId: null,
+  userEmail: null,
   loading: false,
       /** ===== модель ===== */
       projects: [
@@ -136,8 +137,14 @@ export const useTasks = create(
 
       /** ===== проекты ===== */
       // ====== remote sync methods =====
-      setUser: (uid) => {
-        set({ userId: uid });
+      setUser: (payload) => {
+        const uid = (typeof payload === 'string' || payload === null)
+          ? payload
+          : (payload?.id ?? null);
+        const email = (typeof payload === 'object' && payload)
+          ? (payload.email ?? null)
+          : null;
+        set({ userId: uid, userEmail: email });
         if (uid) {
           get().loadRemote();
         }
