@@ -2,7 +2,7 @@
 import React, { useMemo, useCallback, useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, Platform, Alert, Pressable, TextInput,
-  KeyboardAvoidingView, ScrollView, ActionSheetIOS, Keyboard
+  KeyboardAvoidingView, ScrollView, Keyboard, BackHandler, Dimensions
 } from 'react-native';
 
 import FilterRail from '../components/FilterRail';
@@ -153,28 +153,23 @@ export default function TasksScreen() {
     return () => { showSub.remove(); hideSub.remove(); };
   }, []);
 
-  // ---------- долгий тап (mobile): «Куда перенести?»
-  const openMovePicker = useCallback((task) => {
-    if (Platform.OS === 'ios' && ActionSheetIOS?.showActionSheetWithOptions) {
-      ActionSheetIOS.showActionSheetWithOptions(
-        { title: 'Перенести в…', options: ['⭐⚡ Важно + Срочно', '⭐ Важно', '⚡ Срочно', '• Остальное', 'Отмена'], cancelButtonIndex: 4 },
-        (i) => {
-          if (i === 0) moveToQuadrant(task.id, 'uv');
-          else if (i === 1) moveToQuadrant(task.id, 'v');
-          else if (i === 2) moveToQuadrant(task.id, 'u');
-          else if (i === 3) moveToQuadrant(task.id, 'o');
-        }
-      );
-    } else {
-      Alert.alert('Перенести в…', undefined, [
-        { text: '⭐⚡ Важно + Срочно', onPress: () => moveToQuadrant(task.id, 'uv') },
-        { text: '⭐ Важно',            onPress: () => moveToQuadrant(task.id, 'v') },
-        { text: '⚡ Срочно',           onPress: () => moveToQuadrant(task.id, 'u') },
-        { text: '• Остальное',         onPress: () => moveToQuadrant(task.id, 'o') },
-        { text: 'Отмена', style: 'cancel' },
-      ]);
-    }
-  }, [moveToQuadrant]);
+  // ---------- долгий тап (mobile): «Куда перенести?» — кастомная модалка
+  const [moveOpen, setMoveOpen] = useState(false);
+  const [moveTask, setMoveTask] = useState(null);
+  const [moveAnchor, setMoveAnchor] = useState({ x: 0, y: 0 });
+  const openMovePicker = useCallback((task, x = 0, y = 0) => { setMoveTask(task); setMoveAnchor({ x, y }); setMoveOpen(true); }, []);
+  const closeMovePicker = useCallback(() => { setMoveOpen(false); setMoveTask(null); }, []);
+
+  // Закрытие модалок по кнопке «Назад» на Android
+  useEffect(() => {
+    const onBack = () => {
+      if (moveOpen) { closeMovePicker(); return true; }
+      if (addOpen) { setAddOpen(false); return true; }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, [moveOpen, addOpen, closeMovePicker]);
 
   const showProjectBadge = selectedProjectId === 'all';
   const getProjectBadge = useCallback(
@@ -232,27 +227,32 @@ export default function TasksScreen() {
             contentContainerStyle={{ paddingVertical: 6 }}
           />
         ) : (
-          // В обычном (не компактном) режиме — деление на секции через SectionList
-          <SectionList
-            sections={[ 
-              { title: '⭐⚡ Важно + Срочно', tint: '#FFC5CF', bg: 'rgba(255,197,207,0.28)', data: groups.uv, key: 'uv' },
-              { title: '⭐ Важно',           tint: '#FFE8A3', bg: 'rgba(255,232,163,0.28)', data: groups.v,  key: 'v' },
-              { title: '⚡ Срочно',          tint: '#D8EFFD', bg: 'rgba(216,239,253,0.28)', data: groups.u,  key: 'u' },
-              { title: '• Остальное',        tint: '#D9F5E5', bg: 'rgba(217,245,229,0.35)', data: groups.o,  key: 'o' },
-            ]}
-            keyExtractor={(item) => item.id}
-            renderItem={renderTaskList}
-            renderSectionHeader={({ section }) => (
-              <View style={{ paddingHorizontal: 8, marginBottom: 2 }}>
-                <View style={{ backgroundColor: section.bg, borderColor: section.tint, borderWidth: 2, borderRadius: 12 }}>
-                  <View style={[styles.cellHeader, { backgroundColor: section.tint, borderTopLeftRadius: 10, borderTopRightRadius: 10, marginBottom: 0 }]}> 
-                    <Text style={styles.cellTitle}>{section.title} ({section.data.length})</Text>
+          // В обычном (не компактном) режиме — один FlatList с заголовками-секциями как элементами
+          <FlatList
+            data={([
+              { key:'uv', title:'⭐⚡ Важно + Срочно', tint:'#FFC5CF', bg:'rgba(255,197,207,0.28)', data: groups.uv },
+              { key:'v',  title:'⭐ Важно',           tint:'#FFE8A3', bg:'rgba(255,232,163,0.28)', data: groups.v  },
+              { key:'u',  title:'⚡ Срочно',          tint:'#D8EFFD', bg:'rgba(216,239,253,0.28)', data: groups.u  },
+              { key:'o',  title:'• Остальное',        tint:'#D9F5E5', bg:'rgba(217,245,229,0.35)', data: groups.o  },
+            ]).flatMap(sec => [
+              { _type:'header', _key:`header-${sec.key}`, title:sec.title, tint:sec.tint, bg:sec.bg, count:sec.data.length },
+              ...sec.data.map(t => ({ _type:'item', ...t }))
+            ])}
+            keyExtractor={(it) => it._type === 'header' ? it._key : it.id}
+            renderItem={({ item }) => (
+              item._type === 'header' ? (
+                <View style={{ paddingHorizontal: 8, marginBottom: 2 }}>
+                  <View style={{ backgroundColor: item.bg, borderColor: item.tint, borderWidth: 2, borderRadius: 12 }}>
+                    <View style={[styles.cellHeader, { backgroundColor: item.tint, borderTopLeftRadius: 10, borderTopRightRadius: 10, marginBottom: 0 }]}> 
+                      <Text style={styles.cellTitle}>{item.title} ({item.count})</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
+              ) : (
+                renderTaskList({ item })
+              )
             )}
             contentContainerStyle={{ paddingBottom: 12 }}
-            stickySectionHeadersEnabled={false}
           />
         )
       )}
@@ -297,7 +297,7 @@ export default function TasksScreen() {
           <Pressable pointerEvents="box-only" style={styles.modalBackdrop} onPress={() => setAddOpen(false)} />
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={[styles.modalWrap, { paddingBottom: kbHeight > 0 ? kbHeight + 28 : 0 }]}   // +запас
+            style={[styles.modalWrap, Platform.OS === 'android' && { bottom: kbHeight > 0 ? kbHeight : 0 }]}
             keyboardVerticalOffset={16}
           >
             <View style={styles.modalCard}>
@@ -315,29 +315,33 @@ export default function TasksScreen() {
                 />
 
                 <Text style={styles.label}>Проект</Text>
-                <View style={styles.rowWrap}>
-                  {projects.filter(p=>p.id!=='all').map((p) => (
-                    <Pressable key={p.id} onPress={() => setNewProjectId(p.id)} style={[styles.chip, newProjectId === p.id && styles.chipOn]}>
-                      <Text style={[styles.chipText, newProjectId === p.id && styles.chipTextOn]}>
-                        {(p.emoji ?? '📁') + ' ' + p.name}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 8 }}>
+                  <View style={styles.rowH}>
+                    {projects.filter(p=>p.id!=='all').map((p) => (
+                      <Pressable key={p.id} onPress={() => setNewProjectId(p.id)} style={[styles.chip, newProjectId === p.id && styles.chipOn]}>
+                        <Text style={[styles.chipText, newProjectId === p.id && styles.chipTextOn]}>
+                          {(p.emoji ?? '📁') + ' ' + p.name}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </ScrollView>
 
                 <Text style={[styles.label, { marginTop: 10 }]}>Приоритет (матрица)</Text>
-                <View style={styles.rowWrap}>
-                  {[
-                    { key:'uv', label:'⭐⚡ Важно + Срочно' },
-                    { key:'v',  label:'⭐ Важно' },
-                    { key:'u',  label:'⚡ Срочно' },
-                    { key:'o',  label:'• Остальное' },
-                  ].map(q => (
-                    <Pressable key={q.key} onPress={() => setNewQuad(q.key)} style={[styles.chip, newQuad === q.key && styles.chipOn]}>
-                      <Text style={[styles.chipText, newQuad === q.key && styles.chipTextOn]}>{q.label}</Text>
-                    </Pressable>
-                  ))}
-                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 8 }}>
+                  <View style={styles.rowH}>
+                    {[
+                      { key:'uv', label:'⭐⚡ Важно + Срочно' },
+                      { key:'v',  label:'⭐ Важно' },
+                      { key:'u',  label:'⚡ Срочно' },
+                      { key:'o',  label:'• Остальное' },
+                    ].map(q => (
+                      <Pressable key={q.key} onPress={() => setNewQuad(q.key)} style={[styles.chip, newQuad === q.key && styles.chipOn]}>
+                        <Text style={[styles.chipText, newQuad === q.key && styles.chipTextOn]}>{q.label}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </ScrollView>
               </ScrollView>
 
               <View style={styles.modalActions}>
@@ -346,6 +350,48 @@ export default function TasksScreen() {
               </View>
             </View>
           </KeyboardAvoidingView>
+        </View>
+      )}
+
+      {/* Модалка «Перенести в…» */}
+      {moveOpen && (
+        <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+          <Pressable pointerEvents="box-only" style={styles.modalBackdrop} onPress={closeMovePicker} />
+          {(() => {
+            const { width: vw, height: vh } = Dimensions.get('window');
+            const menuW = 260; const menuH = 200; const margin = 8;
+            let left = moveAnchor.x; let top = moveAnchor.y;
+            if (left + menuW > vw - margin) left = Math.max(margin, vw - menuW - margin);
+            if (top + menuH > vh - margin) top = Math.max(margin, vh - menuH - margin);
+            // Если клавиатура открыта на Android и поповер низко — поднимем его
+            if (Platform.OS === 'android' && kbHeight > 0 && top + menuH > vh - kbHeight - margin) {
+              top = Math.max(margin, vh - kbHeight - menuH - margin);
+            }
+            return (
+              <View style={[styles.movePopover, { left, top, width: menuW }]}> 
+                <Text style={styles.modalTitle}>Перенести в…</Text>
+                <View style={{ paddingVertical: 4 }}>
+                  <Pressable onPress={() => { if (moveTask) moveToQuadrant(moveTask.id, 'uv'); closeMovePicker(); }} style={styles.ctxItem}>
+                    <Text style={styles.ctxText}>⭐⚡ Важно + Срочно</Text>
+                  </Pressable>
+                  <Pressable onPress={() => { if (moveTask) moveToQuadrant(moveTask.id, 'v'); closeMovePicker(); }} style={styles.ctxItem}>
+                    <Text style={styles.ctxText}>⭐ Важно</Text>
+                  </Pressable>
+                  <Pressable onPress={() => { if (moveTask) moveToQuadrant(moveTask.id, 'u'); closeMovePicker(); }} style={styles.ctxItem}>
+                    <Text style={styles.ctxText}>⚡ Срочно</Text>
+                  </Pressable>
+                  <Pressable onPress={() => { if (moveTask) moveToQuadrant(moveTask.id, 'o'); closeMovePicker(); }} style={styles.ctxItem}>
+                    <Text style={styles.ctxText}>• Остальное</Text>
+                  </Pressable>
+                </View>
+                <View style={[styles.modalActions, { marginTop: 4 }]}>
+                  <Pressable onPress={closeMovePicker} style={[styles.btn, styles.btnGhost]}>
+                    <Text style={styles.btnGhostText}>Отмена</Text>
+                  </Pressable>
+                </View>
+              </View>
+            );
+          })()}
         </View>
       )}
     </View>
@@ -434,12 +480,13 @@ const styles = StyleSheet.create({
   modalCard: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 16, borderTopRightRadius: 16,
-    padding: 14, gap: 8, maxHeight: '88%',            // чуть выше
+    padding: 14, gap: 8, maxHeight: '70%',            // чтобы не залезало слишком высоко
   },
   modalTitle: { fontSize: 16, fontWeight: '700', color: '#111', marginBottom: 4 },
   input: { borderWidth: StyleSheet.hairlineWidth, borderColor: '#D9D9DF', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8 },
   label: { fontSize: 12, color: '#666', fontWeight: '700' },
   rowWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
+  rowH: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4, paddingRight: 8 },
 
   chip: { backgroundColor: '#F2F3F5', borderRadius: 999, paddingVertical: 6, paddingHorizontal: 10 },
   chipOn: { backgroundColor: '#111' },
@@ -452,4 +499,17 @@ const styles = StyleSheet.create({
   btnGhostText: { color: '#111', fontWeight: '700' },
   btnPrimary: { backgroundColor: '#111' },
   btnPrimaryText: { color: '#fff', fontWeight: '700' },
+
+  // Поповер переноса (якорный)
+  movePopover: {
+    position: 'absolute',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#E6E6E6',
+    elevation: 4,
+    // web-friendly shadow
+    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+  },
 });

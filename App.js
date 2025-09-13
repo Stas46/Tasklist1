@@ -2,7 +2,7 @@
 import 'react-native-gesture-handler';
 
 import React, { Component, useMemo } from 'react';
-import { Platform, View, Text, StyleSheet, Pressable, Alert } from 'react-native';
+import { Platform, View, Text, StyleSheet, Pressable, Alert, StatusBar, Keyboard } from 'react-native';
 
 // ✅ На native Reanimated обязателен, на web — отключаем
 if (Platform.OS !== 'web') {
@@ -146,6 +146,18 @@ export default function App() {
   const userId = useTasks((s) => s.userId);
   const userEmail = useTasks((s) => s.userEmail);
 
+  // Убираем клавиатуру и явные настройки статус-бара при смене авторизации,
+  // чтобы не оставалось затемнение после ввода на Android
+  React.useEffect(() => {
+    try { Keyboard.dismiss(); } catch {}
+    if (Platform.OS === 'android') {
+      try {
+        StatusBar.setBackgroundColor('#ffffff', true);
+        StatusBar.setBarStyle('dark-content');
+      } catch {}
+    }
+  }, [userId]);
+
   const doSignOut = async () => {
     try {
       await signOut();
@@ -159,6 +171,7 @@ export default function App() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
           <AppErrorBoundary>
+            <StatusBar translucent={false} backgroundColor="#ffffff" barStyle="dark-content" />
             <AuthScreen />
           </AppErrorBoundary>
         </SafeAreaProvider>
@@ -170,6 +183,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AppErrorBoundary>
+          <StatusBar translucent={false} backgroundColor="#ffffff" barStyle="dark-content" />
           <NavigationContainer theme={navTheme}>
             <Drawer.Navigator
               initialRouteName="Tasks"

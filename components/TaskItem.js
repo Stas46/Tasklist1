@@ -128,7 +128,14 @@ export default function TaskItem({
         friction={1.5}
       >
         <Pressable
-          onLongPress={(e) => { armGuard(); onLongPress?.(task); if (Platform.OS === 'web') handleLongPressWeb(e); }}
+          onLongPress={(e) => { 
+            armGuard(); 
+            const ne = e?.nativeEvent; 
+            const nx = ne?.pageX ?? 0; 
+            const ny = ne?.pageY ?? 0; 
+            onLongPress?.(task, nx, ny); 
+            if (Platform.OS === 'web') handleLongPressWeb(e); 
+          }}
           delayLongPress={250}
           style={({ pressed }) => [
             styles.card,
@@ -158,7 +165,13 @@ export default function TaskItem({
               ) : (
                 <Pressable
                   onPress={() => { if (!longPressGuard.current) setEditing(true); }}
-                  onLongPress={() => { armGuard(); onLongPress?.(task); }}
+                  onLongPress={(e) => { 
+                    armGuard(); 
+                    const ne = e?.nativeEvent; 
+                    const nx = ne?.pageX ?? 0; 
+                    const ny = ne?.pageY ?? 0; 
+                    onLongPress?.(task, nx, ny); 
+                  }}
                   delayLongPress={250}
                 >
                   <Text

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, Platform, useWindowDimensions } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, TextInput, Pressable, StyleSheet, Platform, useWindowDimensions, KeyboardAvoidingView, StatusBar, Keyboard } from 'react-native';
 import { signIn, signUp, signOut } from '../src/services/auth';
 import { useTasks } from '../store/useTasks';
 
@@ -17,6 +17,7 @@ export default function AuthScreen() {
 
   const doSignIn = async () => {
     setLoading(true); setError(null);
+    Keyboard.dismiss();
     try {
       await signIn(email.trim(), password);
   setInfo(null);
@@ -27,6 +28,7 @@ export default function AuthScreen() {
 
   const doSignUp = async () => {
     setLoading(true); setError(null);
+    Keyboard.dismiss();
     try {
       await signUp(email.trim(), password);
   // Supabase will usually send a confirmation email for new sign-ups.
@@ -49,13 +51,41 @@ export default function AuthScreen() {
   };
 
   const cardWidth = Math.min(520, Math.max(320, width - 48));
+  const passwordRef = useRef(null);
+  // Если вернулись на экран логина с уже введённым email — сразу фокус на пароль
+  React.useEffect(() => {
+    if (email && !password) {
+      setTimeout(() => passwordRef.current?.focus?.(), 0);
+    }
+  }, []);
 
   return (
-    <View style={[styles.wrap, { alignItems: 'center' }]}>
-      <View style={[styles.card, { width: cardWidth }]}> 
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.wrap}>
+      <StatusBar barStyle={Platform.OS === 'android' ? 'dark-content' : 'dark-content'} backgroundColor="#ffffff" />
+      <View style={[styles.center, { alignItems: 'center' }]}> 
+        <View style={[styles.card, { width: cardWidth }]}> 
         <Text style={styles.title}>TaskList — Sign in</Text>
-        <TextInput placeholder="Email" value={email} onChangeText={setEmail} style={styles.input} autoCapitalize="none" keyboardType="email-address" />
-        <TextInput placeholder="Password" value={password} onChangeText={setPassword} style={styles.input} secureTextEntry />
+        <TextInput
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          style={styles.input}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          returnKeyType="next"
+          onSubmitEditing={() => passwordRef.current?.focus?.()}
+          blurOnSubmit={false}
+        />
+        <TextInput
+          ref={passwordRef}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          style={styles.input}
+          secureTextEntry
+          returnKeyType="done"
+          onSubmitEditing={doSignIn}
+        />
 
   {error ? <Text style={styles.err}>{error}</Text> : null}
   {info ? <Text style={styles.info}>{info}</Text> : null}
@@ -66,7 +96,7 @@ export default function AuthScreen() {
             style={[
               styles.btn,
               styles.primary,
-              isNarrow ? styles.btnFull : { marginRight: 8 }
+              isNarrow ? styles.btnFull : [styles.btnGrow, { marginRight: 8 }]
             ]}
             disabled={loading}
           >
@@ -77,7 +107,7 @@ export default function AuthScreen() {
             style={[
               styles.btn,
               styles.ghost,
-              isNarrow ? [styles.btnFull, { marginTop: 8 }] : null
+              isNarrow ? [styles.btnFull, { marginTop: 8 }] : styles.btnGrow
             ]}
             disabled={loading}
           >
@@ -94,20 +124,23 @@ export default function AuthScreen() {
           </View>
         )}
 
-        <Text style={styles.note}>Works on web + native (Expo). Use email+password.</Text>
+          <Text style={styles.note}>Works on web + native (Expo). Use email+password.</Text>
+        </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, padding: 20, justifyContent: 'center', backgroundColor: '#fff' },
+  wrap: { flex: 1, backgroundColor: '#fff' },
+  center: { flex: 1, padding: 20, justifyContent: 'center' },
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 18, elevation: 2, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width:0, height:6 } },
   title: { fontSize: 20, fontWeight: '700', marginBottom: 14, textAlign: 'center' },
   input: { borderWidth: StyleSheet.hairlineWidth, borderColor: '#DDD', padding: 12, borderRadius: 8, marginBottom: 10 },
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
+  row: { flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'stretch' },
   rowStack: { flexDirection: 'column' },
-  btn: { flex: 1, padding: 12, borderRadius: 8, alignItems: 'center' },
+  btn: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 8, alignItems: 'center', minHeight: 44 },
+  btnGrow: { flex: 1 },
   btnFull: { width: '100%' },
   primary: { backgroundColor: '#111' },
   ghost: { backgroundColor: '#F2F3F5' },
